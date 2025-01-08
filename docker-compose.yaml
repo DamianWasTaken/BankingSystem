@@ -1,0 +1,61 @@
+version: '3.9'
+
+services:
+  # account database
+  account-db:
+    image: postgres:15
+    container_name: account-db-container
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: account
+    volumes:
+      - account_data:/var/lib/postgresql/data
+      - ./init-scripts/account:/docker-entrypoint-initdb.d
+
+  # interest database
+  interest-db:
+    image: postgres:15
+    container_name: interests-db-container
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: interest
+    volumes:
+      - interest_data:/var/lib/postgresql/data
+      - ./init-scripts/interest:/docker-entrypoint-initdb.d
+
+  # balance database
+  balance-db:
+    image: postgres:15
+    container_name: balance-db-container
+    restart: always
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: balance
+    volumes:
+      - balance_data:/var/lib/postgresql/data
+      - ./init-scripts/balance:/docker-entrypoint-initdb.d
+
+  account-service:
+    build: AccountService/.
+    container_name: account-service
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - account-db
+
+volumes:
+  account_data:
+  interest_data:
+  balance_data:

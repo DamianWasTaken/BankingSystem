@@ -1,0 +1,4 @@
+build image:
+docker build -t account .
+run image:
+docker run -p 8080:8080 --name AccountService account

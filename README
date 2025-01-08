@@ -1,0 +1,25 @@
+docker-compose:
+docker-compose up
+docker-compose down -v
+docker-compose up --build
+
+
+
+
+Assumptions:
+The Activate/Deactivate APIs will be an Admin user feature
+
+
+
+some things intentionally left outside of scope to reduce complexity:
++ using ints, 100 pence instead of 1 pound, instead of decimals - int is safer for money calculations, but does increase complexity, especially when considering conversions
++ Temporary token revoking
++ Different Roles users (ones which belong to the admin roles will just be plain unprotected routes)
+
++ db sessions ?? not sure if i';ll have time to implement this
+
+
+
+
+Postgres used across all services as ACID transactions do seam like something worth prioritizing considering the nature of the Application --- alternatively some noSQL dbs which mimic ACID transactions could possibly be used, like couchDB, however they tend to async presist, so we'd still need to further implement failure mechanisms to ensure persistance (possibly some event driven system, like RabbitMQ or NATS, where it'll retry until succeeds and only gets deleted from queue on ACK)
+
