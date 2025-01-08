@@ -8,22 +8,20 @@ import (
 	"github.com/alexedwards/argon2id"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+
+	"AccountService/utils"
 )
 
 // repositories
 type AccountEnviormentSerivce struct {
 	Secret         string
 	UserManagement interface {
-		CreateUser(string, string, string, float32) error
-		DeleteUser(email string) error
-		LoginUser(email, password string) (string, error)
+		CreateUser(utils.CreateUserRequest) error
+		DeleteUser(utils.DeleteUserRequest) error
+		LoginUser(utils.LoginRequest) (string, error)
 		CheckIfEmailExists(email string, create bool) error
-		CheckIfIdExists(id int) error
 	}
-	AuthManagment interface {
-		ValidateUser(c *gin.Context)
-	}
-	AccountManagment interface {
+	AccountManagement interface {
 		DeactivateAccount()
 		ReactivateAccount()
 	}
@@ -31,7 +29,7 @@ type AccountEnviormentSerivce struct {
 
 // handlers/service methods
 func (repositories *AccountEnviormentSerivce) CreateUser(c *gin.Context) {
-	var newUser CreateUserRequest
+	var newUser utils.CreateUserRequest
 
 	if err := c.ShouldBindJSON(&newUser); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errors": []string{err.Error()}})
@@ -44,13 +42,13 @@ func (repositories *AccountEnviormentSerivce) CreateUser(c *gin.Context) {
 		return
 	}
 
-	hashedPassword, err := argon2id.CreateHash(newUser.Password, argon2id.DefaultParams)
+	newUser.Password, err = argon2id.CreateHash(newUser.Password, argon2id.DefaultParams)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
 		return
 	}
 
-	err = repositories.UserManagement.CreateUser(newUser.Email, newUser.Name, hashedPassword, newUser.DepositValue)
+	err = repositories.UserManagement.CreateUser(newUser)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
 		return
@@ -59,16 +57,14 @@ func (repositories *AccountEnviormentSerivce) CreateUser(c *gin.Context) {
 
 }
 func (repositories *AccountEnviormentSerivce) DeleteUser(c *gin.Context) {
-	var deleteUserRequest struct {
-		UserId string `json:"email"`
-	}
+	var deleteUserRequest utils.DeleteUserRequest
 
 	if err := c.ShouldBindJSON(&deleteUserRequest); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errors": []string{err.Error()}})
 		return
 	}
 
-	err := repositories.UserManagement.DeleteUser(deleteUserRequest.UserId)
+	err := repositories.UserManagement.DeleteUser(deleteUserRequest)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
 		return
@@ -91,17 +87,14 @@ func (repositories *AccountEnviormentSerivce) ReactivateAccount(c *gin.Context) 
 }
 
 func (repositories *AccountEnviormentSerivce) LoginUser(c *gin.Context) {
-	var loginRequest struct {
-		Email    string `json:"email" binding:"required"`
-		Password string `json:"password" binding:"required"`
-	}
+	var loginRequest utils.LoginRequest
 
 	if err := c.ShouldBindJSON(&loginRequest); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errors": []string{err.Error()}})
 		return
 	}
 
-	hashedPassword, err := repositories.UserManagement.LoginUser(loginRequest.Email, loginRequest.Password)
+	hashedPassword, err := repositories.UserManagement.LoginUser(loginRequest)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
 		return

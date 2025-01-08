@@ -55,10 +55,9 @@ func setupEnviorment() *AccountEnviormentSerivce {
 	}
 	// repositories initialization
 	return &AccountEnviormentSerivce{
-		Secret:           "w1XyDEXb5/lTYLHiw768tCknKpMPvjqAEPxm0wXjRuw=", // SHA265 hash of "secret", should be an eviorment variable variable
-		UserManagement:   &utils.UserManagement{DB: database},
-		AuthManagment:    &utils.AuthManagment{DB: database},
-		AccountManagment: &utils.AccountManagement{DB: database},
+		Secret:            "w1XyDEXb5/lTYLHiw768tCknKpMPvjqAEPxm0wXjRuw=", // SHA265 hash of "secret", should be an eviorment variable variable
+		UserManagement:    &utils.UserManagement{DB: database},
+		AccountManagement: &utils.AccountManagement{DB: database},
 	}
 
 }

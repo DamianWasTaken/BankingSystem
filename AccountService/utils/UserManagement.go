@@ -10,8 +10,8 @@ type UserManagement struct {
 	//could implement a map to store emails to check if they exist without db and at O(1), map existing on init
 }
 
-func (user *UserManagement) CreateUser(email, name, password string, depositValue float32) error { // TODO: comeback here once balance service is up
-	query := fmt.Sprintf("INSERT INTO public.user (email, name, password, active) VALUES ('%s', '%s', '%s', %t)", email, name, password, true)
+func (user *UserManagement) CreateUser(newUser CreateUserRequest) error { // TODO: comeback here once balance service is up
+	query := fmt.Sprintf("INSERT INTO public.user (email, name, password, active) VALUES ('%s', '%s', '%s', %t)", newUser.Email, newUser.Name, newUser.Password, true)
 	_, err := user.DB.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error when creating user: %w", err)
@@ -19,8 +19,8 @@ func (user *UserManagement) CreateUser(email, name, password string, depositValu
 	return nil
 }
 
-func (user *UserManagement) DeleteUser(email string) error {
-	query := fmt.Sprintf("DELETE FROM public.user WHERE email = '%s'", email)
+func (user *UserManagement) DeleteUser(deleteUser DeleteUserRequest) error {
+	query := fmt.Sprintf("DELETE FROM public.user WHERE email = '%s'", deleteUser.Email)
 	_, err := user.DB.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error when deleting user: %w", err)
@@ -44,22 +44,8 @@ func (user *UserManagement) CheckIfEmailExists(email string, create bool) error 
 	return nil
 }
 
-func (user *UserManagement) CheckIfIdExists(id int) error {
-	query := fmt.Sprintf("SELECT EXISTS(SELECT * FROM public.user WHERE userId = %d)", id)
-	sqlRow := user.DB.QueryRow(query)
-	var exists bool
-	err := sqlRow.Scan(&exists)
-	if err != nil {
-		return fmt.Errorf("error when checking if userId exists: %w", err)
-	}
-	if !exists {
-		return fmt.Errorf("userId does not exist")
-	}
-	return nil
-}
-
-func (user *UserManagement) LoginUser(email, password string) (string, error) {
-	query := fmt.Sprintf("SELECT password FROM public.user WHERE email = '%s'", email)
+func (user *UserManagement) LoginUser(loginUser LoginRequest) (string, error) {
+	query := fmt.Sprintf("SELECT password FROM public.user WHERE email = '%s'", loginUser.Email)
 	sqlRow := user.DB.QueryRow(query)
 	var hashedPassword string
 	err := sqlRow.Scan(&hashedPassword)

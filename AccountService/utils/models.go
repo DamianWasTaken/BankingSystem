@@ -1,4 +1,4 @@
-package main
+package utils
 
 type CreateUserRequest struct {
 	Email        string  `json:"email" binding:"required"`
@@ -13,4 +13,13 @@ type DeactivateAccountRequest struct {
 
 type ReactivateAccountRequest struct {
 	Email int `json:"email" binding:"required"`
+}
+
+type DeleteUserRequest struct {
+	Email string `json:"email"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
