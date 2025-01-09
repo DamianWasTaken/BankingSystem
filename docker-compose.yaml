@@ -46,6 +46,30 @@ services:
       - balance_data:/var/lib/postgresql/data
       - ./init-scripts/balance:/docker-entrypoint-initdb.d
 
+  # logging database
+  logging-db:
+    image: postgres:15
+    container_name: logging-db-container
+    restart: always
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: logging
+    volumes:
+      - logging_data:/var/lib/postgresql/data
+      - ./init-scripts/logging:/docker-entrypoint-initdb.d
+
+  logging-service:
+    build: LoggingService/.
+    container_name: logging-service-container
+    restart: always
+    ports:
+      - "8083:8080"
+    depends_on:
+      - logging-db
+
   account-service:
     build: AccountService/.
     container_name: account-service-container
@@ -54,6 +78,7 @@ services:
       - "8080:8080"
     depends_on:
       - account-db
+      - logging-service
 
   balance-service:
     build: BalanceService/.
@@ -64,6 +89,7 @@ services:
     depends_on:
       - balance-db
       - account-service
+      - logging-service
   
   interest-service:
     build: InterestService/.
@@ -75,8 +101,12 @@ services:
       - interest-db
       - account-service
       - balance-service
+      - logging-service
+
+
 
 volumes:
   account_data:
   interest_data:
   balance_data:
+  logging_data:

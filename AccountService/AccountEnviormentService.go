@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -53,6 +55,10 @@ func (repositories *AccountEnviormentSerivce) CreateUser(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
 		return
 	}
+	log := utils.LogStatusChange{Email: newUser.Email, Status: "created"}
+	jsonData, _ := json.Marshal(log)
+	http.Post("http://logging-service:8080/logging/account/status", "application/json", bytes.NewBuffer(jsonData))
+
 	c.JSON(http.StatusCreated, gin.H{"message": "User created"})
 
 }

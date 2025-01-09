@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -74,62 +73,6 @@ func (repositories *InterestEnviormentService) ModifyDailyInterestRate(c *gin.Co
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Interest rate modified"})
-}
-
-func (repositories *InterestEnviormentService) ValidateJWT(c *gin.Context) {
-
-	ByteBody, _ := io.ReadAll(c.Request.Body)
-	c.Request.Body = io.NopCloser(bytes.NewBuffer(ByteBody))
-
-	type emailReader struct {
-		Email string `json:"email" binding:"required"`
-	}
-
-	var email emailReader
-
-	err := json.Unmarshal(ByteBody, &email)
-
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errors": []string{"Error on parsing request validation bytes"}})
-	}
-	// if err := c.ShouldBindJSON(&email); err != nil {
-	// 	c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errors": []string{err.Error()}})
-	// 	return
-	// }
-
-	requestBody, err := json.Marshal(map[string]string{
-		"email": email.Email,
-	})
-
-	if err != nil {
-		fmt.Println("Error creating request body:", err)
-		return
-	}
-
-	HeaderToken := c.GetHeader("Authorization")
-
-	//validate token
-	client := &http.Client{}
-	url := "http://account-service:8080/auth/validate"
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errors": []string{"Error on validation http setup"}})
-
-	}
-
-	req.Header.Set("Authorization", HeaderToken)
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errors": []string{"Error on sending validation http"}})
-	}
-
-	defer resp.Body.Close()
-
-	if resp.Status != "200 OK" {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errors": []string{"Invalid token"}})
-	}
 }
 
 func (repositories *InterestEnviormentService) ProcessInterest() {

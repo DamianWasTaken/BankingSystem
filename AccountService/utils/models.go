@@ -27,3 +27,8 @@ type LoginRequest struct {
 type ValidateTokenRequest struct {
 	Email string `json:"email" binding:"required,max=100"`
 }
+
+type LogStatusChange struct {
+	Email  string `json:"email"`
+	Status string `json:"status"`
+}
