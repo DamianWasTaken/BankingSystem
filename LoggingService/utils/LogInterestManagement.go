@@ -12,7 +12,7 @@ type LogInterestManagement struct {
 
 func (interestLogManagement *LogInterestManagement) PersistInterestChange(interestLog InterestLog) error {
 
-	query := fmt.Sprintf("INSERT INTO interestConfiguration (interestRate, created) VALUES (%f, %s)", interestLog.Interest, time.Now())
+	query := fmt.Sprintf("INSERT INTO interestConfiguration (interestRate, created) VALUES (%f, '%s')", interestLog.Interest, time.Now().Format("2006-01-02 15:04:05"))
 	_, err := interestLogManagement.DB.Exec(query)
 	if err != nil {
 		return err
@@ -21,7 +21,7 @@ func (interestLogManagement *LogInterestManagement) PersistInterestChange(intere
 }
 
 func (interestLogManagement *LogInterestManagement) PersistInterestUserApplication(interestApplicationLog InterestApplicationLog) error {
-	query := fmt.Sprintf("INSERT INTO interestUserApplication (email, currency, interestRate, frequency, created, outcome) VALUES ('%s', '%s', %f, '%s', '%s', '%s')", interestApplicationLog.Email, interestApplicationLog.Currency, interestApplicationLog.InterestRate, interestApplicationLog.Frequency, time.Now().Format(time.RFC3339), interestApplicationLog.Outcome)
+	query := fmt.Sprintf("INSERT INTO interestUserApplication (email, currency, interestRate, frequency, created, outcome) VALUES ('%s', '%s', %f, '%s', '%s', '%s')", interestApplicationLog.Email, interestApplicationLog.Currency, interestApplicationLog.InterestRate, interestApplicationLog.Frequency, time.Now().Format("2006-01-02 15:04:05"), interestApplicationLog.Outcome)
 	_, err := interestLogManagement.DB.Exec(query)
 	if err != nil {
 		return err

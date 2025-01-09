@@ -85,6 +85,7 @@ func (repositories *BalanceEnviormentService) CreateCurrencyAccount(c *gin.Conte
 		return
 	}
 	logTransaction(CreateCurrencyAccountRequest.Currency, CreateCurrencyAccountRequest.Email, "created", CreateCurrencyAccountRequest.Balance)
+
 	c.JSON(http.StatusCreated, gin.H{"message": "Currency account created"})
 }
 
@@ -172,6 +173,7 @@ func (repositories *BalanceEnviormentService) ProcessInterAccountTransaction(c *
 		logTransaction(ProcessInterAccountTransactionRequest.ToCurrency, ProcessInterAccountTransactionRequest.ToEmail, "credit", valueToAdd)
 
 		c.JSON(http.StatusOK, gin.H{"message": "Inter account transaction processed"})
+		return
 	}
 
 	err = repositories.BalanceManagement.ProcessInterAccountTransaction(ProcessInterAccountTransactionRequest, ProcessInterAccountTransactionRequest.Value)
@@ -259,7 +261,7 @@ func (repositories *BalanceEnviormentService) ValidateJWT(c *gin.Context) {
 	defer resp.Body.Close()
 
 	if resp.Status != "200 OK" {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errors": []string{"Invalid token"}})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errors": []string{"Please check your token or email, and make sure your account is active"}})
 	}
 }
 

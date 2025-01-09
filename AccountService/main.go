@@ -36,11 +36,6 @@ func main() {
 	accountRoutes.PATCH("/deactivate", accEnv.DeactivateAccount)
 	accountRoutes.PATCH("/reactivate", accEnv.ReactivateAccount)
 
-	accountRoutes.Use(accEnv.ValidateJWT)
-	{
-		accountRoutes.GET("/accountStatusHistory", accEnv.AccountStatusHistory)
-	}
-
 	if err := r.Run(":8080"); err != nil {
 		fmt.Println("Failed to start server")
 	}

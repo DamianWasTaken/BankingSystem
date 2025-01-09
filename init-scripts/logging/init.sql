@@ -25,5 +25,5 @@ CREATE TABLE public.interestUserApplication (
     interestRate DECIMAL(10, 2) NOT NULL,
     frequency VARCHAR(50) NOT NULL,
     created TIMESTAMP NOT NULL,
-    outcode VARCHAR(6) NOT NULL
+    outcome VARCHAR(6) NOT NULL
 );

@@ -26,6 +26,7 @@ type AccountEnviormentSerivce struct {
 	AccountManagement interface {
 		DeactivateAccount(string) error
 		ReactivateAccount(string) error
+		IsAccountActive(string) (bool, error)
 	}
 }
 
@@ -55,7 +56,7 @@ func (repositories *AccountEnviormentSerivce) CreateUser(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
 		return
 	}
-
+	LogStatusChange(newUser.Email, "active")
 	c.JSON(http.StatusCreated, gin.H{"message": "User created"})
 
 }
@@ -177,10 +178,6 @@ func (repositories *AccountEnviormentSerivce) LoginUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": tokenString, "expiresAt": claims.ExpiresAt})
 }
 
-func (repositories *AccountEnviormentSerivce) AccountStatusHistory(c *gin.Context) {
-	// this will make a call to the log service
-}
-
 func (e *AccountEnviormentSerivce) ValidateJWT(c *gin.Context) {
 
 	HeaderToken := c.GetHeader("Authorization")
@@ -193,7 +190,7 @@ func (e *AccountEnviormentSerivce) ValidateJWT(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.AbortWithStatusJSON(401, gin.H{"message": "Invalid token"})
+		c.AbortWithStatusJSON(401, gin.H{"message": "error parsing token"})
 		return
 	}
 
@@ -209,6 +206,16 @@ func (e *AccountEnviormentSerivce) ValidateJWT(c *gin.Context) {
 		err = e.UserManagement.CheckIfEmailExists(email, false)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errors": []string{"UserId invalid"}})
+			return
+		}
+
+		active, err := e.AccountManagement.IsAccountActive(email)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{"Error checking account status"}})
+			return
+		}
+		if !active {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errors": []string{"Account inactive"}})
 			return
 		}
 		c.Set("email", email)

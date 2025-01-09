@@ -1,14 +1,45 @@
-docker-compose:
-docker-compose up
-docker-compose down -v
-docker-compose up --build
+# Pre-requisites 
+    - docker
+    - docker compose
+Ports which should be open to run locally:
+DBs: 5432, 5433, 5434, 5435
+services: 8080, 8081, 8082, 8083  
+
+clone repo and at the root of the project run:
+docker-compose up [will bring all services up]
+
+docker-compose up --build [to rebuild the services]
+docker-compose down -v [to clear out volumes (dbs) which will be recreated from scratch on next init]
 
 
+# Database
+Postgres used across all services as ACID transactions does seem like something worth prioritizing considering the nature of the Application --- alternatively some noSQL dbs which mimic ACID transactions could possibly be used, like couchDB, however they tend to async presist, so we'd still need to further implement failure mechanisms to ensure persistance (possibly some event driven system, like RabbitMQ or NATS, where it'll retry until succeeds and only gets deleted from queue on ACK) -- I'll stick with Postgres though
+
+# Design
+The Design of the application has been done with DDD with a microservices in mind, also following Idependent System Design (ISA) guidelines - https://isa-principles.org/index.html
+
+thus following the first principle that modules should be divided into modules and looking at DDD and Bounded Contexts to create that split of modules, fortunatley that was already done for me:
+Account Managment
+Balance Operations
+Interest Managment
+Audit logging
 
 
-Assumptions:
-The Activate/Deactivate APIs will be an Admin user feature
+![Services Diagram](./ServicesDiagram.png)
 
+modules will be ran through docker in their own individual containers, ran in a cluster through docker-compose
+
+authentication will be done through JWS accross all services, i.e. on account creation we'd create a permanent token which will be accessible to all services, and on authentication we'll create a temporary token which we can validate against (ideally we'd also impliment temporary token revoking)
+
+# Worth mentioning
++ Databases models are initialised in the init-scripts folders
++ I've accidentaly(misunderstood) implemented a intra account functionality which will allow you to transfer funds from different currencies accounts that you own to others
++ Validation requests are made to the POST request route in the Account Service
++ Balance Service handles all transactions, thus the Interest Service starts the application of interests and sends it to the Balance Service to apply the difference
++ All services send their logs to the Logging Service
++ Interest Cron job runs @00:00, however you can simply alter the cron timing to have it run every minute or so for testing pourposes
++ there's a log of the outcome of interest application in the logging db
++ database connections can be found in the docker-compose file
 
 
 some things intentionally left outside of scope to reduce complexity:
@@ -16,10 +47,5 @@ some things intentionally left outside of scope to reduce complexity:
 + Temporary token revoking
 + Different Roles users (apis which belong to the admin roles will just be plain unprotected routes)
 + Enviorment Variables (this will never really go to prod, and all variables used are docker-based)
-+ db sessions ?? used for transactions
-
-
-
-
-Postgres used across all services as ACID transactions do seam like something worth prioritizing considering the nature of the Application --- alternatively some noSQL dbs which mimic ACID transactions could possibly be used, like couchDB, however they tend to async presist, so we'd still need to further implement failure mechanisms to ensure persistance (possibly some event driven system, like RabbitMQ or NATS, where it'll retry until succeeds and only gets deleted from queue on ACK)
-
++ db sessions - used for transactions
++ caches and maps from lookups before making db calls (also for the sake of my RAM)

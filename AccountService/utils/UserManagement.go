@@ -11,7 +11,7 @@ type UserManagement struct {
 }
 
 func (user *UserManagement) CreateUser(newUser CreateUserRequest) error { // TODO: comeback here once balance service is up
-	query := fmt.Sprintf("INSERT INTO public.user (email, name, password, active) VALUES ('%s', '%s', '%s', %t)", newUser.Email, newUser.Name, newUser.Password, true)
+	query := fmt.Sprintf("INSERT INTO public.user (email, name, password, status) VALUES ('%s', '%s', '%s', '%s')", newUser.Email, newUser.Name, newUser.Password, "active")
 	_, err := user.DB.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error when creating user: %w", err)
