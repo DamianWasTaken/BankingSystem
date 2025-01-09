@@ -38,3 +38,18 @@ type ProcessInterestRequest struct {
 	Interest  float32 `json:"interest" binding:"required"`
 	Frequency int     `json:"frequency" binding:"required"`
 }
+
+type BalanceLog struct {
+	Email           string  `json:"email"`
+	Currency        string  `json:"currency"`
+	Value           float32 `json:"value"`
+	TransactionType string  `json:"transactionType"`
+}
+
+type InterestAppliedLog struct {
+	Email        string  `json:"email"`
+	Currency     string  `json:"currency"`
+	InterestRate float32 `json:"interest"`
+	Frequency    int     `json:"frequency"`
+	Outcome      string  `json:"outcome"`
+}

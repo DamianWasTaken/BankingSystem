@@ -25,7 +25,7 @@ type BalanceEnviormentService struct {
 
 		ProcessInterAccountTransaction(utils.ProcessInterAccountTransactionRequest, float32) error
 
-		ProcessInterest(utils.ProcessInterestRequest) error
+		ProcessInterest(utils.ProcessInterestRequest) (float32, error)
 	}
 	CurrencyAccountManagement interface {
 		CreateCurrencyAccount(utils.CreateCurrencyAccountRequest) error
@@ -67,6 +67,7 @@ func (repositories *BalanceEnviormentService) ProcessTransaction(c *gin.Context)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
 		return
 	}
+	logTransaction(ProcessTransactionRequest.Currency, ProcessTransactionRequest.Email, ProcessTransactionRequest.TransactionType, ProcessTransactionRequest.Value)
 	c.JSON(http.StatusOK, gin.H{"message": "Transaction processed"})
 }
 
@@ -83,6 +84,7 @@ func (repositories *BalanceEnviormentService) CreateCurrencyAccount(c *gin.Conte
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors2": []string{err.Error()}})
 		return
 	}
+	logTransaction(CreateCurrencyAccountRequest.Currency, CreateCurrencyAccountRequest.Email, "created", CreateCurrencyAccountRequest.Balance)
 	c.JSON(http.StatusCreated, gin.H{"message": "Currency account created"})
 }
 
@@ -117,6 +119,8 @@ func (repositories *BalanceEnviormentService) ProcessIntraAccountTransaction(c *
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
 		return
 	}
+	logTransaction(ProcessIntraAccountTransactionRequest.FromCurrency, ProcessIntraAccountTransactionRequest.Email, "debit", ProcessIntraAccountTransactionRequest.Value)
+	logTransaction(ProcessIntraAccountTransactionRequest.ToCurrency, ProcessIntraAccountTransactionRequest.Email, "credit", valueToAdd)
 	c.JSON(http.StatusOK, gin.H{"message": "Intra account transaction processed"})
 }
 
@@ -164,6 +168,10 @@ func (repositories *BalanceEnviormentService) ProcessInterAccountTransaction(c *
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
 			return
 		}
+		logTransaction(ProcessInterAccountTransactionRequest.FromCurrency, ProcessInterAccountTransactionRequest.Email, "debit", ProcessInterAccountTransactionRequest.Value)
+		logTransaction(ProcessInterAccountTransactionRequest.ToCurrency, ProcessInterAccountTransactionRequest.ToEmail, "credit", valueToAdd)
+
+		c.JSON(http.StatusOK, gin.H{"message": "Inter account transaction processed"})
 	}
 
 	err = repositories.BalanceManagement.ProcessInterAccountTransaction(ProcessInterAccountTransactionRequest, ProcessInterAccountTransactionRequest.Value)
@@ -171,6 +179,10 @@ func (repositories *BalanceEnviormentService) ProcessInterAccountTransaction(c *
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
 		return
 	}
+
+	// logging
+	logTransaction(ProcessInterAccountTransactionRequest.FromCurrency, ProcessInterAccountTransactionRequest.Email, "debit", ProcessInterAccountTransactionRequest.Value)
+	logTransaction(ProcessInterAccountTransactionRequest.ToCurrency, ProcessInterAccountTransactionRequest.ToEmail, "credit", ProcessInterAccountTransactionRequest.Value)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Inter account transaction processed"})
 }
@@ -180,14 +192,18 @@ func (repositories *BalanceEnviormentService) ApplyInterest(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&interestRequest); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errors": []string{err.Error()}})
+		logInterestApplication(interestRequest.Email, interestRequest.Currency, "failed", interestRequest.Frequency, interestRequest.Interest)
 		return
 	}
 
-	err := repositories.BalanceManagement.ProcessInterest(interestRequest)
+	valueAdded, err := repositories.BalanceManagement.ProcessInterest(interestRequest)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
+		logInterestApplication(interestRequest.Email, interestRequest.Currency, "failed", interestRequest.Frequency, interestRequest.Interest)
 		return
 	}
+	logInterestApplication(interestRequest.Email, interestRequest.Currency, "success", interestRequest.Frequency, interestRequest.Interest)
+	logTransaction(interestRequest.Currency, interestRequest.Email, "interest credit", valueAdded)
 	c.JSON(http.StatusOK, gin.H{"message": "Interest applied"})
 }
 
@@ -245,4 +261,28 @@ func (repositories *BalanceEnviormentService) ValidateJWT(c *gin.Context) {
 	if resp.Status != "200 OK" {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errors": []string{"Invalid token"}})
 	}
+}
+
+func logTransaction(currency, email, transactionType string, value float32) error {
+	log := utils.BalanceLog{Email: email, Currency: currency, Value: value, TransactionType: transactionType}
+	jsonData, err := json.Marshal(log)
+	if err != nil {
+		return err
+	}
+
+	// correct way would be create transaction, send to db, log, then commit the transaction if log is successful otherwise rollback
+	// too late now to refactor though
+	http.Post("http://logging-service:8080/logging/balance", "application/json", bytes.NewBuffer(jsonData))
+	return nil
+}
+
+func logInterestApplication(email, currency, outcome string, frequency int, interestRate float32) error {
+	log := utils.InterestAppliedLog{Email: email, Currency: currency, Frequency: frequency, InterestRate: interestRate, Outcome: outcome}
+	jsonData, err := json.Marshal(log)
+	if err != nil {
+		return err
+	}
+
+	http.Post("http://logging-service:8080/logging/interest/interestUserApplication", "application/json", bytes.NewBuffer(jsonData))
+	return nil
 }

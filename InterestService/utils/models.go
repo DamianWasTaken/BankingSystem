@@ -28,3 +28,7 @@ type ProcessInterest struct {
 	Interest  float32 `json:"interest"`
 	Frequency int     `json:"frequency"`
 }
+
+type InterestLog struct {
+	Interest float32 `json:"interest"`
+}

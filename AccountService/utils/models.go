@@ -32,3 +32,7 @@ type LogStatusChange struct {
 	Email  string `json:"email"`
 	Status string `json:"status"`
 }
+
+type AccountStatusStateChange struct {
+	Email string `json:"email"`
+}

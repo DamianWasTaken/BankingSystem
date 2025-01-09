@@ -64,12 +64,20 @@ func (balance *BalanceManagement) ProcessInterAccountTransaction(processRequest 
 	return nil
 }
 
-func (balance *BalanceManagement) ProcessInterest(InterestObject ProcessInterestRequest) error {
+func (balance *BalanceManagement) ProcessInterest(InterestObject ProcessInterestRequest) (float32, error) {
 	overallInterest := float32(InterestObject.Frequency) * (InterestObject.Interest / 100)
-	query := fmt.Sprintf("UPDATE public.account_currencies SET balance = balance * %f WHERE email = '%s' AND currency = '%s'", overallInterest, InterestObject.Email, InterestObject.Currency)
-	_, err := balance.DB.Exec(query)
+	selectQuery := fmt.Sprintf("SELECT balance FROM public.account_currencies WHERE email = '%s' AND currency = '%s'", InterestObject.Email, InterestObject.Currency)
+	sqlRow := balance.DB.QueryRow(selectQuery)
+	var dbBalance float32
+	err := sqlRow.Scan(&dbBalance)
 	if err != nil {
-		return fmt.Errorf("error when processing interest: %w", err)
+		return 0, fmt.Errorf("error when processing interest: %w", err)
 	}
-	return nil
+	valueAdded := overallInterest * dbBalance
+	query := fmt.Sprintf("UPDATE public.account_currencies SET balance = balance * %f WHERE email = '%s' AND currency = '%s'", overallInterest, InterestObject.Email, InterestObject.Currency)
+	_, err = balance.DB.Exec(query)
+	if err != nil {
+		return 0, fmt.Errorf("error when processing interest: %w", err)
+	}
+	return valueAdded, nil
 }

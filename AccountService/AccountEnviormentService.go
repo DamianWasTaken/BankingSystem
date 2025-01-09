@@ -24,8 +24,8 @@ type AccountEnviormentSerivce struct {
 		CheckIfEmailExists(email string, create bool) error
 	}
 	AccountManagement interface {
-		DeactivateAccount()
-		ReactivateAccount()
+		DeactivateAccount(string) error
+		ReactivateAccount(string) error
 	}
 }
 
@@ -55,9 +55,6 @@ func (repositories *AccountEnviormentSerivce) CreateUser(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
 		return
 	}
-	log := utils.LogStatusChange{Email: newUser.Email, Status: "created"}
-	jsonData, _ := json.Marshal(log)
-	http.Post("http://logging-service:8080/logging/account/status", "application/json", bytes.NewBuffer(jsonData))
 
 	c.JSON(http.StatusCreated, gin.H{"message": "User created"})
 
@@ -101,10 +98,39 @@ func (repositories *AccountEnviormentSerivce) ValidateUser(c *gin.Context) {
 }
 
 func (repositories *AccountEnviormentSerivce) DeactivateAccount(c *gin.Context) {
+	var status utils.AccountStatusStateChange
+
+	if err := c.ShouldBindJSON(&status); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errors": []string{err.Error()}})
+		return
+	}
+
+	err := repositories.AccountManagement.DeactivateAccount(status.Email)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
+		return
+	}
+
+	LogStatusChange(status.Email, "inactive")
+	c.JSON(http.StatusOK, gin.H{"message": "Account deactivated"})
 
 }
 func (repositories *AccountEnviormentSerivce) ReactivateAccount(c *gin.Context) {
+	var status utils.AccountStatusStateChange
 
+	if err := c.ShouldBindJSON(&status); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errors": []string{err.Error()}})
+		return
+	}
+
+	err := repositories.AccountManagement.ReactivateAccount(status.Email)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
+		return
+	}
+
+	LogStatusChange(status.Email, "active")
+	c.JSON(http.StatusOK, gin.H{"message": "Account Reactivated"})
 }
 
 func (repositories *AccountEnviormentSerivce) LoginUser(c *gin.Context) {
@@ -191,4 +217,10 @@ func (e *AccountEnviormentSerivce) ValidateJWT(c *gin.Context) {
 		return
 	}
 	c.Next()
+}
+
+func LogStatusChange(email string, status string) {
+	log := utils.LogStatusChange{Email: email, Status: status}
+	jsonData, _ := json.Marshal(log)
+	http.Post("http://logging-service:8080/logging/account/status", "application/json", bytes.NewBuffer(jsonData))
 }

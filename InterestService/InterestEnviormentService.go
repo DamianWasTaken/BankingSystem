@@ -72,6 +72,7 @@ func (repositories *InterestEnviormentService) ModifyDailyInterestRate(c *gin.Co
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
 		return
 	}
+	logInterestChange(interestRateRequest.InterestRate)
 	c.JSON(http.StatusOK, gin.H{"message": "Interest rate modified"})
 }
 
@@ -133,4 +134,17 @@ func (repositories *InterestEnviormentService) ProcessInterest() {
 
 	}
 
+}
+
+func logInterestChange(interest float32) error {
+	interestLog := utils.InterestLog{
+		Interest: interest,
+	}
+	jsonData, err := json.Marshal(interestLog)
+	if err != nil {
+		return err
+	}
+
+	http.Post("http://logging-service:8080/logging/interest/interestChange", "application/json", bytes.NewBuffer(jsonData))
+	return nil
 }

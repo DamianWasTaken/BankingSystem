@@ -21,7 +21,10 @@ func main() {
 	accountRoutes.GET("/status", loggingEnv.GetAccountStatusHistory)
 
 	logRoutes.POST("/balance", loggingEnv.PersistBalanceChange)
-	logRoutes.POST("/interest", loggingEnv.PersistInterestChange)
+	interestRoutes := logRoutes.Group("/interest")
+
+	interestRoutes.POST("/interestChange", loggingEnv.PersistInterestChange)
+	interestRoutes.POST("/interestUserApplication", loggingEnv.PersistInterestUserApplication)
 
 	if err := r.Run(":8080"); err != nil {
 		fmt.Println("Failed to start server")
