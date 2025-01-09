@@ -76,6 +76,21 @@ func (repositories *AccountEnviormentSerivce) DeleteUser(c *gin.Context) {
 // this will be needed for other services to validate the user before doing any actions
 func (repositories *AccountEnviormentSerivce) ValidateUser(c *gin.Context) {
 	// we'll put this behind the jwt check middleware, so if it reaches here, the user is valid
+	var ValidateTokenRequest utils.ValidateTokenRequest
+
+	if err := c.ShouldBindJSON(&ValidateTokenRequest); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errors": []string{err.Error()}})
+		return
+	}
+	val, err := c.Get("email")
+	if !err {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{"Email not found in claims"}})
+		return
+	}
+	if val != ValidateTokenRequest.Email {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{"Claims email does not match request"}})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "User validated"})
 }
 
@@ -164,6 +179,7 @@ func (e *AccountEnviormentSerivce) CheckJWT(c *gin.Context) {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errors": []string{"UserId invalid"}})
 			return
 		}
+		c.Set("email", email)
 	} else {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errors": []string{"Token invalid"}})
 		return

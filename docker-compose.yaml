@@ -48,12 +48,22 @@ services:
 
   account-service:
     build: AccountService/.
-    container_name: account-service
+    container_name: account-service-container
     restart: always
     ports:
       - "8080:8080"
     depends_on:
       - account-db
+
+  balance-service:
+    build: BalanceService/.
+    container_name: balance-service-container
+    restart: always
+    ports:
+      - "8081:8080"
+    depends_on:
+      - balance-db
+      - account-service
 
 volumes:
   account_data:
