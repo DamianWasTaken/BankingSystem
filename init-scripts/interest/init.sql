@@ -1,5 +1,5 @@
 CREATE TABLE public.currencyList (
-    currency PRIMARY KEY
+    currency VARCHAR(3) PRIMARY KEY
 );
 
 INSERT INTO public.currencyList (currency) VALUES
@@ -7,13 +7,17 @@ INSERT INTO public.currencyList (currency) VALUES
 ('USD'),
 ('EUR');
 
-CREATE TABLE public.interest (
+CREATE TABLE public.interestRate(
+    interest DECIMAL(4,2) PRIMARY KEY
+);
+
+INSERT INTO public.interestRate (interest) VALUES
+(0.00);
+
+CREATE TABLE public.interestUser (
     interestId SERIAL PRIMARY KEY,
-    userId INT NOT NULL,
-    accountCurrency VARCHAR(100) UNIQUE NOT NULL REFERENCES public.account_currencies(accountCurrency),
-    interestPercent DECIMAL(4,2),
+    email VARCHAR(200) NOT NULL,
+    accountCurrency VARCHAR(100) UNIQUE NOT NULL REFERENCES public.currencyList(currency),
     interestFrequency INT,
     nextInterestDate DATE
 );
-
-

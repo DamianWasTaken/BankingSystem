@@ -24,7 +24,7 @@ func main() {
 	//auth there is for authentication, not authorization, thus why login is on the user routes
 	authRoutes := r.Group("/auth/")
 
-	authRoutes.Use(accEnv.CheckJWT)
+	authRoutes.Use(accEnv.ValidateJWT)
 	{
 		authRoutes.POST("/validate", accEnv.ValidateUser)
 	}
@@ -33,10 +33,10 @@ func main() {
 	accountRoutes := r.Group("/account/")
 
 	//unprotected on pourpose, otherwise I'd have to implement user roles
-	accountRoutes.POST("/deactivate", accEnv.DeactivateAccount)
-	accountRoutes.POST("/reactivate", accEnv.ReactivateAccount)
+	accountRoutes.PATCH("/deactivate", accEnv.DeactivateAccount)
+	accountRoutes.PATCH("/reactivate", accEnv.ReactivateAccount)
 
-	accountRoutes.Use(accEnv.CheckJWT)
+	accountRoutes.Use(accEnv.ValidateJWT)
 	{
 		accountRoutes.GET("/accountStatusHistory", accEnv.AccountStatusHistory)
 	}

@@ -12,11 +12,11 @@ The Activate/Deactivate APIs will be an Admin user feature
 
 
 some things intentionally left outside of scope to reduce complexity:
-+ using ints, 100 pence instead of 1 pound, instead of decimals - int is safer for money calculations, but does increase complexity, especially when considering conversions
++ using ints, 100 pence instead of 1 pound, instead of decimals
 + Temporary token revoking
-+ Different Roles users (ones which belong to the admin roles will just be plain unprotected routes)
-
-+ db sessions ?? not sure if i';ll have time to implement this
++ Different Roles users (apis which belong to the admin roles will just be plain unprotected routes)
++ Enviorment Variables (this will never really go to prod, and all variables used are docker-based)
++ db sessions ?? used for transactions
 
 
 

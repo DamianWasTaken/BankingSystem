@@ -20,10 +20,10 @@ type DeleteUserRequest struct {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Email    string `json:"email" binding:"required,max=100"`
+	Password string `json:"password" binding:"required,max=100"`
 }
 
 type ValidateTokenRequest struct {
-	Email string `json:"email" binding:"required"`
+	Email string `json:"email" binding:"required,max=100"`
 }

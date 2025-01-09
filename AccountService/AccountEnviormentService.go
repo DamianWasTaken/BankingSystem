@@ -149,7 +149,7 @@ func (repositories *AccountEnviormentSerivce) AccountStatusHistory(c *gin.Contex
 	// this will make a call to the log service
 }
 
-func (e *AccountEnviormentSerivce) CheckJWT(c *gin.Context) {
+func (e *AccountEnviormentSerivce) ValidateJWT(c *gin.Context) {
 
 	HeaderToken := c.GetHeader("Authorization")
 

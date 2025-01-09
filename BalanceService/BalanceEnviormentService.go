@@ -24,6 +24,8 @@ type BalanceEnviormentService struct {
 		ProcessTransaction(utils.ProcessTransactionRequest) error
 
 		ProcessInterAccountTransaction(utils.ProcessInterAccountTransactionRequest, float32) error
+
+		ProcessInterest(utils.ProcessInterestRequest) error
 	}
 	CurrencyAccountManagement interface {
 		CreateCurrencyAccount(utils.CreateCurrencyAccountRequest) error
@@ -173,7 +175,23 @@ func (repositories *BalanceEnviormentService) ProcessInterAccountTransaction(c *
 	c.JSON(http.StatusOK, gin.H{"message": "Inter account transaction processed"})
 }
 
-func (repositories *BalanceEnviormentService) Validate(c *gin.Context) {
+func (repositories *BalanceEnviormentService) ApplyInterest(c *gin.Context) {
+	var interestRequest utils.ProcessInterestRequest
+
+	if err := c.ShouldBindJSON(&interestRequest); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errors": []string{err.Error()}})
+		return
+	}
+
+	err := repositories.BalanceManagement.ProcessInterest(interestRequest)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errors": []string{err.Error()}})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Interest applied"})
+}
+
+func (repositories *BalanceEnviormentService) ValidateJWT(c *gin.Context) {
 
 	ByteBody, _ := io.ReadAll(c.Request.Body)
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(ByteBody))

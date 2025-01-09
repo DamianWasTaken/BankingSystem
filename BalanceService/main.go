@@ -15,7 +15,7 @@ func main() {
 	balanceEnv := setupEnviorment()
 
 	currencyAccountRoutes := r.Group("/currencyAccount")
-	currencyAccountRoutes.Use(balanceEnv.Validate)
+	currencyAccountRoutes.Use(balanceEnv.ValidateJWT)
 	{
 		currencyAccountRoutes.POST("/create", balanceEnv.CreateCurrencyAccount)
 		currencyAccountRoutes.POST("/IntraAccountTransaction", balanceEnv.ProcessIntraAccountTransaction)
@@ -23,13 +23,15 @@ func main() {
 	}
 
 	transactionRoutes := r.Group("/balance")
-	transactionRoutes.Use(balanceEnv.Validate)
+	transactionRoutes.Use(balanceEnv.ValidateJWT)
 	{
 		transactionRoutes.GET("/getBalance", balanceEnv.GetBalance)
 		transactionRoutes.POST("/process", balanceEnv.ProcessTransaction)
 		transactionRoutes.POST("/processInterAccount", balanceEnv.ProcessInterAccountTransaction)
-
 	}
+
+	interestRoutes := r.Group("/interest")
+	interestRoutes.POST("/applyInterest", balanceEnv.ApplyInterest)
 
 	if err := r.Run(":8080"); err != nil {
 		fmt.Println("Failed to start server")
